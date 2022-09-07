@@ -1,3 +1,4 @@
+# Initializing Root Server List
 rootServerList = {
     "a.root-servers.net": "198.41.0.4",
     "b.root-servers.net": "199.9.14.201",
@@ -13,3 +14,13 @@ rootServerList = {
     "l.root-servers.net": "199.7.83.42",
     "m.root-servers.net": "202.12.27.33",
 }
+
+print("Mydig Tool Started.")
+
+# Taking Input of domain name and type of DNS resolution
+domainName = input("Enter the name of the domain you want to resolve\n")
+resolutionType = input("Enter type of DNS resolution - A, NS or MX\n")
+
+
+
+print("Answer for {} with type {} is nm".format(domainName, resolutionType))
