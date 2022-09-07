@@ -19,8 +19,13 @@ print("Mydig Tool Started.")
 
 # Taking Input of domain name and type of DNS resolution
 domainName = input("Enter the name of the domain you want to resolve\n")
-resolutionType = input("Enter type of DNS resolution - A, NS or MX\n")
-
-
+resolutionType = input("Enter type of DNS resolution -> A, NS or MX\n")
+# Checking whether correct type is provided
+while(1): 
+    if resolutionType=="A" or resolutionType=="NS" or resolutionType=="MX":
+        break
+    else:
+        resolutionType = input("Please enter correct type of DNS resolution -> A, NS or MX\n")
+        continue
 
 print("Answer for {} with type {} is nm".format(domainName, resolutionType))
