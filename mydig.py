@@ -42,24 +42,10 @@ rootServerDict = {
     "m.root-servers.net": "202.12.27.33",
 }
 
-# A = dns.resolver.resolve('stackoverflow.com', 'A')
-# print(A.response.answer[0][0].address)
-
-# qname = dns.name.from_text("com")
-# q = dns.message.make_query(qname, dns.rdatatype.NS)
-# print("")
-
-# r = dns.query.udp(q, "8.8.8.8",3)
-# print(r)
-
-# print("")
 # print("The nameservers are:")
 # ns_rrset = r.find_rrset(r.answer, qname, dns.rdataclass.IN, dns.rdatatype.NS)
 # for rr in ns_rrset:
 #     print(rr.target)
-# print("")
-# print("")
-# quit()
 
 # Function to generate DNS queries
 def query_resolver(searchDomain, queryType, serverList):
@@ -73,9 +59,12 @@ def query_resolver(searchDomain, queryType, serverList):
             r = dns.query.udp(q, serverList[j],5)
             return r
         except dns.exception.Timeout:
-            print("Name server not answering, moving to next available name server")
+            print("Name server timeout occured, moving to next available name server")
             j=j+1
-    return None
+    # return None
+    print("Unable to reach any available name servers")
+    quit()
+
 # Mydig Tool implmentation
 def my_dig():
     print("Mydig Tool Started.")
@@ -161,6 +150,7 @@ def ground_truth():
     A = dns.resolver.resolve("cnn.com", 'A')
     print("Ground truth is: ")
     print(A.response.answer)
+    # print(A.response.answer[0][0].address)
 
 # print("Answer for {} with type {} is nm".format(domainName, resolutionType))
 
