@@ -1,4 +1,6 @@
 #import dnspython packages
+import string
+from typing import List
 import dns.resolver
 import dns.name
 import dns.message
@@ -59,90 +61,109 @@ rootServerDict = {
 # print("")
 # quit()
 
+# Function to generate DNS queries
+def query_resolver(searchDomain, queryType, serverList):
+    j=0
+    while j<len(serverList):
+        try:
+            # Configuring  the DNS request
+            qname = dns.name.from_text(searchDomain)
+            q = dns.message.make_query(qname, queryType)
+            # Making the DNS request using UDP 
+            r = dns.query.udp(q, serverList[j],5)
+            return r
+        except dns.exception.Timeout:
+            print("Name server not answering, moving to next available name server")
+            j=j+1
+    return None
 # Mydig Tool implmentation
-print("Mydig Tool Started.")
+def my_dig():
+    print("Mydig Tool Started.")
 
-# Taking Input of domain name and type of DNS resolution
-domainName = input("Enter the name of the domain you want to resolve\n")
-resolutionType = input("Enter type of DNS resolution -> A, NS or MX\n")
-# Checking whether correct type is provided
-while(1): 
-    if resolutionType=="A" or resolutionType=="NS" or resolutionType=="MX":
-        break
-    else:
-        resolutionType = input("Please enter correct type of DNS resolution -> A, NS or MX\n")
-        continue
+    # Taking Input of domain name and type of DNS resolution
+    # domainName = input("Enter the name of the domain you want to resolve\n")
+    # resolutionType = input("Enter type of DNS resolution -> A, NS or MX\n")
+    domainName = "cnn.com"
+    resolutionType = "A"
 
-# Splitting up the domain name using split function on basis of "."
-domainNameArray = domainName.split(".")
+    # Checking whether correct type is provided
+    while(1): 
+        if resolutionType=="A" or resolutionType=="NS" or resolutionType=="MX":
+            break
+        else:
+            resolutionType = input("Please enter correct type of DNS resolution -> A, NS or MX\n")
+            continue
 
-# Start of iterative DNS query
-i=len(domainNameArray)-1
-while i>=0:
-    # Code for hitting root server the first time
-    if i==len(domainNameArray)-1:
-        # Retrieving the top level domain name for searching inside root
-        searchDomain = domainNameArray[i]
-        # Looping thorugh Root Server List in case of failure
-        j=0
-        while j<len(rootServerList):
-            try:
-                # Configuring up the DNS request
-                qname = dns.name.from_text(searchDomain)
-                q = dns.message.make_query(qname, dns.rdatatype.NS)
-                # Making the DNS request using UDP to the root server
-                r = dns.query.udp(q, rootServerList[j],5)
-                # Parsing thorugh Resource Record to get IP Addresses of name server
-                targetServerList=[]
-                for record in r.additional:
-                    for item in record.items:
-                        targetServerList.append(item.address)
+    # Splitting up the domain name using split function on basis of "."
+    domainNameArray = domainName.split(".")
+
+    # Start of iterative DNS query
+    i=len(domainNameArray)-1
+    while i>=0:
+        # Code for hitting root server the first time
+        if i==len(domainNameArray)-1:
+            # Retrieving the top level domain name for searching inside root
+            searchDomain = domainNameArray[i]
+            # Calling query_resolver method to make the DNS request
+            response = query_resolver(searchDomain, dns.rdatatype.NS, rootServerList) 
+
+            # Parsing thorugh Resource Record to get IP Addresses of name server
+            targetServerList=[]
+            for record in response.additional:
+                for item in record.items:
+                    targetServerList.append(item.address)
+            print("Root server returned the address of Name Server of {} is: {}".format(searchDomain, targetServerList[0]))
+                
+        # code for hitting the name servers except root 2nd iteration onwards
+        else:
+            # Building the domain string to be searched in this iteration
+            searchDomain = domainNameArray[i] + "." + searchDomain
+            # Calling query_resolver method to make the DNS request
+            response = query_resolver(searchDomain, dns.rdatatype.NS, targetServerList)
+            
+            # Parsing thorugh Resource Record to get IP Addresses of name server
+            targetServerList=[]
+            for record in response.additional:
+                for item in record.items:
+                    targetServerList.append(item.address)
+            if len(targetServerList) != 0:
                 print("The address of Name Server of {} is: {}".format(searchDomain, targetServerList[0]))
-                break
-            # Handling situation where root server doesn't answer
-            except dns.exception.Timeout:
-                print("Root not answering, moving to next available root server")
-                j=j+1
-    # code for hitting the name servers except root 2nd iteration onwards
-    else:
-        # Building the domain string to be searched in this iteration
-        searchDomain = domainNameArray[i] + "." + searchDomain
-        # Looping thorugh Target Name Server List in case of failure
-        j=0
-        while j<len(targetServerList):
-            try:
-                # Configuring up the DNS request
-                qname = dns.name.from_text(searchDomain)
-                q = dns.message.make_query(qname, dns.rdatatype.NS)
-                # Making the DNS request using UDP to the name servers
-                r = dns.query.udp(q, targetServerList[j],5)
-                # print(r)
-                # Parsing thorugh Resource Record to get IP Addresses of name server
-                targetServerList=[]
-                for record in r.additional:
-                    for item in record.items:
-                        targetServerList.append(item.address)
-                if len(targetServerList) != 0:
-                    print("The address of Name Server of {} is: {}".format(searchDomain, targetServerList[0]))
-                else:
-                    print("Additional processing required")
-                break
-            # Handling situation where name server doesnt answer
-            except dns.exception.Timeout:
-                print("Name server not answering, moving to next available name server")
-                j=j+1
-    i-=1
+            else:
+                print("Additional processing required")
+        i-=1
 
-# Ask Authoratitive Name server for A record of searched domain name
-qname = dns.name.from_text(domainName)
-q = dns.message.make_query(qname, dns.rdatatype.A)
-# Making the DNS query using UDP to the Authoratitive name server for the searched domain name
-r = dns.query.udp(q, targetServerList[0],5)
-print(r.answer)
+    # Ask Authoratitive Name server for A record of searched domain name
+    # Calling query_resolver method to make the DNS request
+    response = query_resolver(domainName, dns.rdatatype.A, targetServerList)
 
-# Validating against Ground Truth using Stub resolver
-A = dns.resolver.resolve(domainName, 'A')
-print("Ground truth is: ")
-print(A.response.answer)
+    # Parsing the response to check whether A record or Cname record returned
+    for record in response.answer:
+        if record.rdtype == 5:
+            print("Record is a Cname, iterating further")
+            for item in record.items:
+                print(item)
+                qname = dns.name.from_text(item.to_text())
+                q = dns.message.make_query(qname, dns.rdatatype.A)
+                # Making the DNS query using UDP to the Authoratitive name server for the Cname
+                print("Target server used for A record: ",targetServerList[0])
+                r = dns.query.udp(q, targetServerList[0],5)
+                print(r)
+        elif record.rdtype == 1:
+            print("Record is a A")
+            for item in record.items:
+                print(item)
+        else:
+            print("New Record type found: ", record.rdtype)
+
+#Validating against Ground Truth using Stub resolver
+def ground_truth(): 
+    print("---------------")
+    A = dns.resolver.resolve("cnn.com", 'A')
+    print("Ground truth is: ")
+    print(A.response.answer)
 
 # print("Answer for {} with type {} is nm".format(domainName, resolutionType))
+
+if __name__ == "__main__":
+    my_dig()
+    ground_truth()
