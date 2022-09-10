@@ -66,7 +66,9 @@ def query_resolver(searchDomain, queryType, serverList):
     print("Unable to reach any available name servers")
     quit()
 
+# Recursive Function to generate DNS queries
 def recursive_query_resolver(searchDomain, queryType, targetServer, depth, maxDepth):
+    # Building the Search string
     domainNameArray = searchDomain.split(".")
     searchText = ""
     k=0
@@ -80,13 +82,20 @@ def recursive_query_resolver(searchDomain, queryType, targetServer, depth, maxDe
     qname = dns.name.from_text(searchText)
     q = dns.message.make_query(qname, queryType)
     # Making the DNS request using UDP 
-    response = dns.query.udp(q, targetServer, 5)
+    try:
+        response = dns.query.udp(q, targetServer, 5)
+    except dns.exception.Timeout:
+        return None
     # return response
     targetServerList=[]
     for record in response.additional:
-        for item in record.items:
-            targetServerList.append(item.address)
-    print("{} Iteration complete".format(depth))
+        if record.rdtype == 1:
+            for item in record.items:
+                targetServerList.append(item.address)
+    print("Iteration {} complete for {}".format(depth, searchText))
+    print(targetServerList)
+    if len(targetServerList) == 0:
+        return None
     depth+=1
     if depth > maxDepth:
         print("Depth reached")
@@ -96,12 +105,16 @@ def recursive_query_resolver(searchDomain, queryType, targetServer, depth, maxDe
         response = dns.query.udp(q, targetServerList[0], 5)
         return response.answer
     else:
-        response = recursive_query_resolver(searchDomain, queryType, targetServerList[0], depth, maxDepth)
-        return response
-        # j=0
-        # while j<len(targetServerList):
-        #     response = recursive_query_resolver(domainNameArray[:len(domainNameArray)-1], queryType, targetServerList[j])
-        #     j+=1
+        j=0
+        while j<len(targetServerList):
+            response = recursive_query_resolver(searchDomain, queryType, targetServerList[j], depth, maxDepth)
+            if response == None:
+                print("Moving to next available name server")
+                j+=1
+            else:
+                return response
+        print("DNS encountered an error while parsing")
+        quit()
 
 # Mydig Tool implmentation
 def my_dig(domainName, resolutionType):
@@ -116,60 +129,19 @@ def my_dig(domainName, resolutionType):
     # Splitting up the domain name using split function on basis of "."
     domainNameArray = domainName.split(".")
     maxDepth = len(domainNameArray)
+
+    # Looping through available root servers in case of failure
     j=0
     while j<len(rootServerList):
         response = recursive_query_resolver(domainName, dns.rdatatype.NS, rootServerList[j], 1, maxDepth) 
         if response == None:
+            print("Moving to next available root server")
             j+=1
         else:
             print(response)
             return
     print("Unable to reach any available name servers")
     quit()
-    # Start of iterative DNS query
-    i=len(domainNameArray)-1
-    count=0
-    while i>=0:
-        # Code for hitting root server the first time
-        if i==len(domainNameArray)-1:
-            # Retrieving the top level domain name for searching inside root
-            print("Root")
-            searchDomain = domainNameArray[i]
-            # Calling query_resolver method to make the DNS request
-            response = query_resolver(searchDomain, dns.rdatatype.NS, rootServerList) 
-
-            # Making A type request to get IP of name server
-            
-
-            # Parsing thorugh Resource Record to get IP Addresses of name server
-            targetServerList=[]
-            for record in response.additional:
-                for item in record.items:
-                    targetServerList.append(item.address)
-            print("Root server returned the address of Name Server of {} is: {}".format(searchDomain, targetServerList[0]))
-                
-        # code for hitting the name servers except root 2nd iteration onwards
-        else:
-            # Building the domain string to be searched in this iteration
-            print("Name Server: ",count)
-            searchDomain = domainNameArray[i] + "." + searchDomain
-
-            # Calling query_resolver method to make the DNS request
-            response = recursive_query_resolver(searchDomain, dns.rdatatype.NS, targetServerList)
-            # response = query_resolver(searchDomain, dns.rdatatype.NS, targetServerList)
-            # print(response)
-            
-            # Parsing thorugh Resource Record to get IP Addresses of name server
-            targetServerList=[]
-            for record in response.additional:
-                for item in record.items:
-                    targetServerList.append(item.address)
-            if len(targetServerList) != 0:
-                print("The address of Name Server of {} is: {}".format(searchDomain, targetServerList[0]))
-            else:
-                print("Additional processing required")
-        i-=1
-        count+=1
 
     # Ask Authoratitive Name server for A record of searched domain name
     # Calling query_resolver method to make the DNS request
@@ -211,7 +183,7 @@ if __name__ == "__main__":
     # Taking Input of domain name and type of DNS resolution
     # domainName = input("Enter the name of the domain you want to resolve\n")
     # resolutionType = input("Enter type of DNS resolution -> A, NS or MX\n")
-    domainName = "cnn.com"
+    domainName = "amazon.com"
     resolutionType = "A"
     my_dig(domainName, resolutionType)
     ground_truth(domainName, resolutionType)
