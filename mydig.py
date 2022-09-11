@@ -74,7 +74,6 @@ def recursive_query_resolver(searchDomain, queryType, targetServer, depth, maxDe
     # Check if Additional Section is present in response
     # If additional section not present access Authority section
     if len(response.additional) == 0:
-        # print(response)
         print("Additional Absent, Accessing authority")
         if response.authority[0].rdtype == 2:
             # Handling scenario for NS record in Authority section
@@ -87,18 +86,8 @@ def recursive_query_resolver(searchDomain, queryType, targetServer, depth, maxDe
         elif response.authority[0].rdtype == 6:
             # Handling scenario for SOA record in Authority section
             print("SOA record present")
-            # soaServer = []
-            # for item in response.authority[0].items:
-            #     soaServer = item.to_text().split(" ")[0]
-            # print("SOA server for {} is {}".format(searchText, soaServer))
             print("Target server is {}".format(targetServer))
             targetServerList = [targetServer]
-            # depth = maxDepth 
-            # response = recursive_query_resolver(searchDomain, dns.rdatatype.NS, targetServer, 1, len(soaServer.split(".")))
-            # print("Result of SOA search is")
-            # print(response)
-            # quit()
-        # quit()
     # If additional section  present parse it for IP Address of name server
     else:
         targetServerList=[]
