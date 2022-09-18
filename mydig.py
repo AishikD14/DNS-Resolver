@@ -82,15 +82,18 @@ def recursive_query_resolver(searchDomain, queryType, targetServer, depth, maxDe
     else:
         if len(response.additional) == 0:
             # print("Additional Absent, Accessing authority")
-            if response.authority[0].rdtype == 2:
-                # Handling scenario for NS record in Authority section
-                nameServerList = []
-                for item in response.authority[0].items:
-                    nameServerList.append(item.to_text())
-                targetServerList = my_dig(nameServerList[0], "A", False)
-            elif response.authority[0].rdtype == 6:
-                # Handling scenario for SOA record in Authority section
+            if len(response.authority) == 0:
                 targetServerList = [targetServer]
+            else:
+                if response.authority[0].rdtype == 2:
+                    # Handling scenario for NS record in Authority section
+                    nameServerList = []
+                    for item in response.authority[0].items:
+                        nameServerList.append(item.to_text())
+                    targetServerList = my_dig(nameServerList[0], "A", False)
+                elif response.authority[0].rdtype == 6:
+                    # Handling scenario for SOA record in Authority section
+                    targetServerList = [targetServer]
         # If additional section  present parse it for IP Address of name server
         else:
             targetServerList=[]

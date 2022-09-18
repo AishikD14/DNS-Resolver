@@ -312,10 +312,10 @@ if __name__ == "__main__":
     # print("Mydig Tool Started.")
 
     # Taking Input of domain name and type of DNS resolution
-    # domainName = input("Enter the name of the domain you want to resolve\n")
+    domainName = input("Enter the name of the domain you want to resolve\n")
     # resolutionType = input("Enter type of DNS resolution -> A, NS or MX\n")
     # domainName = "amazon.com" # working
-    domainName = "google.com" # working
+    # domainName = "google.com" # working
     # domainName = "www.cnn.com"    # working
     # domainName = "google.co.jp" # working
     # domainName = "aws.amazon.com"
