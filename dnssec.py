@@ -7,6 +7,9 @@ import dns.message
 import dns.rdataclass
 import dns.rdatatype
 import dns.query
+import time
+import datetime
+import sys
 
 # Initializing Root Server List
 rootServerList = [
@@ -59,26 +62,26 @@ def fetch_dnskey(searchText, targetServerList):
             # print(response)
             for record in response.answer:
                 if record.rdtype == 48:
-                    print("------------------------")
-                    print("RRSET2")
+                    # print("------------------------")
+                    # print("RRSET2")
                     RRSET = record
-                    print(record)
+                    # print(record)
                     for item in record:
                         if item.flags == 257:
-                            print("------------------------")
-                            print("Public KSK")
+                            # print("------------------------")
+                            # print("Public KSK")
                             KSK = item
-                            print(item)
+                            # print(item)
                         elif item.flags == 256:
-                            print("------------------------")
-                            print("Public ZSK")
+                            # print("------------------------")
+                            # print("Public ZSK")
                             ZSK = item
-                            print(item)
+                            # print(item)
                 elif record.rdtype == 46:
-                    print("------------------------")
-                    print("RRSIG2")
+                    # print("------------------------")
+                    # print("RRSIG2")
                     RRSIG = record
-                    print(record)
+                    # print(record)
             return RRSIG, ZSK, KSK, RRSET
         except dns.exception.Timeout:
             index+=1
@@ -136,8 +139,8 @@ def recursive_query_resolver(searchDomain, queryType, targetServer, depth, maxDe
     except dns.exception.Timeout:
         return None
 
-    print("^^^^^^^^^^^^^^^")
-    print(response)
+    # print("^^^^^^^^^^^^^^^")
+    # print(response)
     
     if searchText != "":
         # Check Authority Section for DS record to verify whether DNSSEC supported or not
@@ -146,10 +149,10 @@ def recursive_query_resolver(searchDomain, queryType, targetServer, depth, maxDe
             if record.rdtype == 43:
                 supported = True
                 for item in record:
-                    print("------------------------")
+                    # print("------------------------")
                     DS =item
-                    print("DS")
-                    print(item)
+                    # print("DS")
+                    # print(item)
                 break
         # If DNSSEC not supported end program
         if supported == False:
@@ -158,19 +161,19 @@ def recursive_query_resolver(searchDomain, queryType, targetServer, depth, maxDe
 
         for record in response.authority:
             if record.rdtype == 2:
-                print("------------------------")
+                # print("------------------------")
                 RRSET1 = record
-                print("RRSET1")
-                print(record)
+                # print("RRSET1")
+                # print(record)
             elif record.rdtype == 46:
-                print("------------------------")
+                # print("------------------------")
                 RRSIG1 = record
-                print("RRSIG1")
-                print(record)
+                # print("RRSIG1")
+                # print(record)
 
     # Check if Additional Section is present in response
     # If additional section not present access Authority section
-    if len(response.answer) != 0:
+    if depth == maxDepth and len(response.answer) != 0:
         # Fetch KSK, ZSK and RRSIG to validate authenticity
         # qname = dns.name.from_text(searchText)
         # q = dns.message.make_query(qname, dns.rdatatype.DNSKEY, want_dnssec = True)
@@ -178,15 +181,18 @@ def recursive_query_resolver(searchDomain, queryType, targetServer, depth, maxDe
     else:
         if len(response.additional) == 0:
             # print("Additional Absent, Accessing authority")
-            if response.authority[0].rdtype == 2:
-                # Handling scenario for NS record in Authority section
-                nameServerList = []
-                for item in response.authority[0].items:
-                    nameServerList.append(item.to_text())
-                targetServerList = my_dig(nameServerList[0], "A", False)
-            elif response.authority[0].rdtype == 6:
-                # Handling scenario for SOA record in Authority section
+            if len(response.authority) == 0:
                 targetServerList = [targetServer]
+            else:
+                if response.authority[0].rdtype == 2:
+                    # Handling scenario for NS record in Authority section
+                    nameServerList = []
+                    for item in response.authority[0].items:
+                        nameServerList.append(item.to_text())
+                    targetServerList = my_dig(nameServerList[0], "A", False)
+                elif response.authority[0].rdtype == 6:
+                    # Handling scenario for SOA record in Authority section
+                    targetServerList = [targetServer]
         # If additional section  present parse it for IP Address of name server
         else:
             targetServerList=[]
@@ -222,7 +228,7 @@ def recursive_query_resolver(searchDomain, queryType, targetServer, depth, maxDe
 
     # Handling scenario when max depth of tree reached
     if depth > maxDepth:
-        print("Depth reached")
+        # print("Depth reached")
         qname = dns.name.from_text(searchDomain)
         q = dns.message.make_query(qname, dns.rdatatype.A)
         # Making the DNS request using UDP 
@@ -293,10 +299,9 @@ def my_dig(domainName, resolutionType, mainCall):
                 elif response[0].rdtype == 5 and resolutionType=="MX":
                     return my_dig(response[0][0].to_text(), "A", True)
                 else:
-                    print("Printing final response")
-                    print("Answer for {} with type {} is {}".format(domainName, resolutionType, response))
-                    resolution = True
-                    break
+                    # print("Printing final response")
+                    # print("Answer for {} with type {} is {}".format(domainName, resolutionType, response))
+                    return response
     if resolution == False:
         print("Unable to reach any available Root servers")
 
@@ -326,5 +331,17 @@ if __name__ == "__main__":
     # print("Performing DNS query for {}".format(domainName))
 
     # Calling mydig tool
-    my_dig(domainName, resolutionType, True)
+    start_time = time.time()
+    result = my_dig(domainName, resolutionType, True)
+    total_time = time.time() - start_time
+    print("\nQUESTION SECTION: \n")
+    print("{}   IN  {}".format(domainName, resolutionType))
+    print("\nANSWER SECTION: \n")
+    for item in result:
+        for i in item:
+            address = i.to_text()
+    print("{} IN {}  {}".format(domainName, resolutionType, address))
+    print("\nQuery Time: {} msec".format(round(total_time*1000,4)))
+    print("\nWHEN: {}".format(datetime.datetime.now().strftime("%a %b %d %H:%M:%S %Y\n")))
+    print("MSG SIZE rcvd: {}".format(str(sys.getsizeof(result))))
     # ground_truth(domainName, resolutionType)

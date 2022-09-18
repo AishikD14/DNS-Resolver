@@ -176,8 +176,6 @@ def my_dig(domainName, resolutionType, mainCall):
                     # print("Printing final response")
                     # print("Answer for {} with type {} is {}".format(domainName, resolutionType, response))
                     return response
-                    resolution = True
-                    break
     if resolution == False:
         print("Unable to reach any available Root servers")
 
