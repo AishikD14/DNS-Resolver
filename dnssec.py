@@ -127,7 +127,7 @@ def recursive_query_resolver(searchDomain, queryType, targetServer, depth, maxDe
         else:
             searchText += "." + domainNameArray[i]
     
-    print("Searching for {} from {}".format(searchText, searchDomain))
+    # print("Searching for {} from {}".format(searchText, searchDomain))
 
     # Configuring  the DNS request
     qname = dns.name.from_text(searchText)
@@ -211,14 +211,14 @@ def recursive_query_resolver(searchDomain, queryType, targetServer, depth, maxDe
 
                 verificationStatus = verify_KSK(searchText, KSK, DS)
                 if verificationStatus == True:
-                    print("KSK Verified")
+                    # print("KSK Verified")
                     verify_ZSK(RRSET2, RRSIG2, searchText)
-                    print("ZSK Verified")
+                    # print("ZSK Verified")
                     # verify_rrset(RRSET1, RRSIG1, searchText, ZSK)
                     # print("Verification successful")
                     # quit()
                 else:
-                    print("DNSSec verification failed for KSK")
+                    print("DNSSec verification failed")
                     quit()
             
 

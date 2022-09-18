@@ -62,7 +62,7 @@ def recursive_query_resolver(searchDomain, queryType, targetServer, depth, maxDe
         else:
             searchText += "." + domainNameArray[i]
     
-    print("Searching for {} from {}".format(searchText, searchDomain))
+    # print("Searching for {} from {}".format(searchText, searchDomain))
     # Configuring  the DNS request
     qname = dns.name.from_text(searchText)
     q = dns.message.make_query(qname, dns.rdatatype.A)
