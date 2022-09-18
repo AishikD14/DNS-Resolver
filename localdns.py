@@ -213,7 +213,7 @@ if __name__ == "__main__":
             total_time = time.time() - start_time
             timeArray.append(round(total_time*1000,4))
         mean = sum(timeArray)/10
-        with open("part2.csv", "a") as f:
+        with open("localdns.csv", "a") as f:
             f.write("%s - %s\n" % (i, mean))
     # print("\nQUESTION SECTION: \n")
     # print("{}   IN  {}".format(domainName, resolutionType))
