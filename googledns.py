@@ -11,6 +11,7 @@ import dns.query
 import time
 import datetime
 import sys
+import os
 
 # Initializing Root Server List
 rootServerList = [
@@ -190,8 +191,8 @@ if __name__ == "__main__":
     # print("Mydig Tool Started.")
 
     # Taking Input of domain name and type of DNS resolution
-    domainName = input("Enter the name of the domain you want to resolve\n")
-    resolutionType = input("Enter type of DNS resolution -> A, NS or MX\n")
+    # domainName = input("Enter the name of the domain you want to resolve\n")
+    # resolutionType = input("Enter type of DNS resolution -> A, NS or MX\n")
     # domainName = "amazon.com" # working
     # domainName = "google.com" # working
     # domainName = "www.cnn.com"    # working
@@ -201,18 +202,27 @@ if __name__ == "__main__":
     # resolutionType = "NS"
     # print("Performing DNS query for {}".format(domainName))
 
+    website_list = ["youtube.com", "en.wikipedia.org", "twitter.com", "instagram.com", "amazon.com"]
     # Calling mydig tool
-    start_time = time.time()
-    result = my_dig(domainName, resolutionType, True)
-    total_time = time.time() - start_time
-    print("\nQUESTION SECTION: \n")
-    print("{}   IN  {}".format(domainName, resolutionType))
-    print("\nANSWER SECTION: \n")
-    for item in result:
-        for i in item:
-            address = i.to_text()
-    print("{} IN {}  {}".format(domainName, resolutionType, address))
-    print("\nQuery Time: {} msec".format(round(total_time*1000,4)))
-    print("\nWHEN: {}".format(datetime.datetime.now().strftime("%a %b %d %H:%M:%S %Y\n")))
-    print("MSG SIZE rcvd: {}".format(str(sys.getsizeof(result))))
+    for i in website_list:
+        timeArray = []
+        for j in range(10):
+            start_time = time.time()
+            # result = my_dig(i, "A", True)
+            os.system("nslookup "+i)
+            total_time = time.time() - start_time
+            timeArray.append(round(total_time*1000,4))
+        mean = sum(timeArray)/10
+        with open("localdns.csv", "a") as f:
+            f.write("%s - %s\n" % (i, mean))
+    # print("\nQUESTION SECTION: \n")
+    # print("{}   IN  {}".format(domainName, resolutionType))
+    # print("\nANSWER SECTION: \n")
+    # for item in result:
+    #     for i in item:
+    #         address = i.to_text()
+    # print("{} IN {}  {}".format(domainName, resolutionType, address))
+    # print("\nQuery Time: {} msec".format(round(total_time*1000,4)))
+    # print("\nWHEN: {}".format(datetime.datetime.now().strftime("%a %b %d %H:%M:%S %Y\n")))
+    # print("MSG SIZE rcvd: {}".format(str(sys.getsizeof(result))))
     # ground_truth(domainName, resolutionType)
