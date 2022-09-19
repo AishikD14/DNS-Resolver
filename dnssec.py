@@ -223,7 +223,7 @@ def recursive_query_resolver(searchDomain, queryType, targetServer, depth, maxDe
                     # print("Verification successful")
                     # quit()
                 else:
-                    print("DNSSec verification failed for KSK")
+                    print("DNSSec verification failed")
                     quit()
             
 

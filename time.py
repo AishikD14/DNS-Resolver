@@ -62,7 +62,7 @@ def recursive_query_resolver(searchDomain, queryType, targetServer, depth, maxDe
         else:
             searchText += "." + domainNameArray[i]
     
-    print("Searching for {} from {}".format(searchText, searchDomain))
+    # print("Searching for {} from {}".format(searchText, searchDomain))
     # Configuring  the DNS request
     qname = dns.name.from_text(searchText)
     q = dns.message.make_query(qname, dns.rdatatype.A)
@@ -187,22 +187,10 @@ def ground_truth(domainName, resolutionType):
 
 # Main function
 if __name__ == "__main__":
-    # print("Mydig Tool Started.")
-
-    # Taking Input of domain name and type of DNS resolution
-    # domainName = input("Enter the name of the domain you want to resolve\n")
-    # resolutionType = input("Enter type of DNS resolution -> A, NS or MX\n")
-    # domainName = "amazon.com" # working
-    # domainName = "google.com" # working
-    # domainName = "www.cnn.com"    # working
-    # domainName = "google.co.jp" # working
-    # domainName = "aws.amazon.com"
-    # domainName = "aishikdeb.com"
-    # resolutionType = "NS"
-    # print("Performing DNS query for {}".format(domainName))
 
     website_list = ["youtube.com", "en.wikipedia.org", "twitter.com", "instagram.com", "amazon.com"]
     # Calling mydig tool
+    writeData = []
     for i in website_list:
         timeArray = []
         for j in range(10):
@@ -211,16 +199,7 @@ if __name__ == "__main__":
             total_time = time.time() - start_time
             timeArray.append(round(total_time*1000,4))
         mean = sum(timeArray)/10
-        with open("part1.csv", "a") as f:
-            f.write("%s-%s\n" % (i, mean))
-    # print("\nQUESTION SECTION: \n")
-    # print("{}   IN  {}".format(domainName, resolutionType))
-    # print("\nANSWER SECTION: \n")
-    # for item in result:
-    #     for i in item:
-    #         address = i.to_text()
-    # print("{} IN {}  {}".format(domainName, resolutionType, address))
-    # print("\nQuery Time: {} msec".format(round(total_time*1000,4)))
-    # print("\nWHEN: {}".format(datetime.datetime.now().strftime("%a %b %d %H:%M:%S %Y\n")))
-    # print("MSG SIZE rcvd: {}".format(str(sys.getsizeof(result))))
-    # ground_truth(domainName, resolutionType)
+        writeData.append([i, mean])
+    with open("part1.csv", "w") as f:
+        for i in writeData:
+            f.write("%s-%s\n" % (i[0], i[1]))
