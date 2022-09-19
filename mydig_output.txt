@@ -1,0 +1,63 @@
+python mydig.py
+Enter the name of the domain you want to resolve
+cnn.com
+Enter type of DNS resolution -> A, NS or MX
+A
+
+QUESTION SECTION:
+
+cnn.com   IN  A
+
+ANSWER SECTION:
+
+cnn.com IN A  151.101.67.5
+
+Query Time: 80.3316 msec
+
+WHEN: Mon Sep 19 19:30:08 2022
+
+MSG SIZE rcvd: 88
+
+-----------------------------------------------------------------------------------
+
+python mydig.py
+Enter the name of the domain you want to resolve
+cnn.com
+Enter type of DNS resolution -> A, NS or MX
+NS
+
+QUESTION SECTION:
+
+cnn.com   IN  NS
+
+ANSWER SECTION:
+
+cnn.com IN NS  ns-576.awsdns-08.net.
+
+Query Time: 72.0971 msec
+
+WHEN: Mon Sep 19 19:31:35 2022
+
+MSG SIZE rcvd: 88
+
+------------------------------------------------------------------------------------
+
+python mydig.py
+Enter the name of the domain you want to resolve
+google.com
+Enter type of DNS resolution -> A, NS or MX
+MX
+
+QUESTION SECTION:
+
+google.com   IN  MX
+
+ANSWER SECTION:
+
+google.com IN MX  10 smtp.google.com.
+
+Query Time: 138.3405 msec
+
+WHEN: Mon Sep 19 19:32:09 2022
+
+MSG SIZE rcvd: 88
