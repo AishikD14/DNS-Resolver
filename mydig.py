@@ -29,30 +29,10 @@ rootServerList = [
     "202.12.27.33",
 ]
 
-# Initializing Root Server Dict
-rootServerDict = {
-    "a.root-servers.net": "198.41.0.4",
-    "b.root-servers.net": "199.9.14.201",
-    "c.root-servers.net": "192.33.4.12",
-    "d.root-servers.net": "199.7.91.13",
-    "e.root-servers.net": "192.203.230.10",
-    "f.root-servers.net": "192.5.5.241",
-    "g.root-servers.net": "192.112.36.4",
-    "h.root-servers.net": "198.97.190.53",
-    "i.root-servers.net": "192.36.148.17",
-    "j.root-servers.net": "192.58.128.30",
-    "k.root-servers.net": "193.0.14.129",
-    "l.root-servers.net": "199.7.83.42",
-    "m.root-servers.net": "202.12.27.33",
-}
-
 # Recursive Function to generate DNS queries
 def recursive_query_resolver(searchDomain, queryType, targetServer, depth, maxDepth):
-
     # Building the Search string for this iteration
     domainNameArray = searchDomain.split(".")
-    # if domainNameArray[len(domainNameArray)-1] == "":
-    #     domainNameArray = domainNameArray[:len(domainNameArray)-1]
     searchText = ""
     k=0
     for i in range(len(domainNameArray)-depth,len(domainNameArray)):
@@ -62,7 +42,6 @@ def recursive_query_resolver(searchDomain, queryType, targetServer, depth, maxDe
         else:
             searchText += "." + domainNameArray[i]
     
-    # print("Searching for {} from {}".format(searchText, searchDomain))
     # Configuring  the DNS request
     qname = dns.name.from_text(searchText)
     q = dns.message.make_query(qname, dns.rdatatype.A)
@@ -70,29 +49,30 @@ def recursive_query_resolver(searchDomain, queryType, targetServer, depth, maxDe
     # Making the DNS request using UDP and handling exception for timeout
     try:
         response = dns.query.udp(q, targetServer, 5)
-        # print(response)
     except dns.exception.Timeout:
         return None
 
-    # Check if Additional Section is present in response
-    # If additional section not present access Authority section
-    # print("Depth - {}, MaxDepth - {}".format(depth, maxDepth))
+    # Check if Answer Section is present in response and max depth is reached
     if depth == maxDepth and len(response.answer) != 0:
         return response.answer
+    # If Answer section not present access Additional section
     else:
+        # If Additional section not present access Authority section
         if len(response.additional) == 0:
-            # print("Additional Absent, Accessing authority")
+            # If Authority section not present return current targetserver as next targetserver
             if len(response.authority) == 0:
                 targetServerList = [targetServer]
+            # Acccess Authority Section
             else:
+                # Handling scenario for NS record in Authority section
                 if response.authority[0].rdtype == 2:
-                    # Handling scenario for NS record in Authority section
                     nameServerList = []
                     for item in response.authority[0].items:
                         nameServerList.append(item.to_text())
+                    # Call my_dig to resolve name server
                     targetServerList = my_dig(nameServerList[0], "A", False)
+                # Handling scenario for SOA record in Authority section
                 elif response.authority[0].rdtype == 6:
-                    # Handling scenario for SOA record in Authority section
                     targetServerList = [targetServer]
         # If additional section  present parse it for IP Address of name server
         else:
@@ -107,7 +87,7 @@ def recursive_query_resolver(searchDomain, queryType, targetServer, depth, maxDe
 
     # Handling scenario when max depth of tree reached
     if depth > maxDepth:
-        # print("Depth reached")
+        # Configuring  the DNS request
         qname = dns.name.from_text(searchDomain)
         q = dns.message.make_query(qname, queryType)
         # Making the DNS request using UDP 
@@ -115,16 +95,20 @@ def recursive_query_resolver(searchDomain, queryType, targetServer, depth, maxDe
         return response.answer
     # Handling scenario when max depth of tree not reached
     else:
+        # Loop through the list of available name servers
         j=0
         while j<len(targetServerList):
+            # Recursively call recursive_query_resolver to resolve the domain name for the next level
             response = recursive_query_resolver(searchDomain, queryType, targetServerList[j], depth, maxDepth)
+            # Handling scenario for Name server timeout
             if response == None:
                 print("Name Server timeout occured")
-                quit() # Remove this line to continue recursion
+                # quit() # Uncomment this line to stop looping
                 print("Moving to next available name server")
                 j+=1
             else:
                 return response
+        # Handling scenario where all Name servers unreachable
         print("DNS encountered an error while parsing")
         quit()
 
@@ -156,56 +140,45 @@ def my_dig(domainName, resolutionType, mainCall):
             print("Moving to next available root server")
             j+=1
         else:
-            # Parsing for IP if called from someplace other than main method
+            # Parsing for IP if called from some other method than main method
             if mainCall == False:
+                # Extract Target Server List from response and send it back
                 targetServerList=[]
                 for record in response:
                     if record.rdtype == 1:
                         for item in record.items:
                             targetServerList.append(item.address)
                 return targetServerList
+            # Handling scenario where my_dig called from main method
             else:
-                # print("^^^^^^^^^^^^^^^")
-                # print(response)
-                # print(response[0][0].to_text())
+                # Handling CNAME resolution 
                 if response[0].rdtype == 5 and resolutionType=="A":
                     return my_dig(response[0][0].to_text(), "A", True)
                 elif response[0].rdtype == 5 and resolutionType=="MX":
                     return my_dig(response[0][0].to_text(), "A", True)
                 else:
-                    # print("Printing final response")
-                    # print("Answer for {} with type {} is {}".format(domainName, resolutionType, response))
                     return response
+    # Handling scenario where all Root servers unreachable
     if resolution == False:
         print("Unable to reach any available Root servers")
 
-#Validating against Ground Truth using Stub resolver
-def ground_truth(domainName, resolutionType): 
-    print("---------------")
-    A = dns.resolver.resolve(domainName, resolutionType)
-    print("Ground truth is: ")
-    print(A.response.answer)
-
 # Main function
 if __name__ == "__main__":
-    # print("Mydig Tool Started.")
 
     # Taking Input of domain name and type of DNS resolution
     domainName = input("Enter the name of the domain you want to resolve\n")
     resolutionType = input("Enter type of DNS resolution -> A, NS or MX\n")
-    # domainName = "amazon.com" # working
-    # domainName = "google.com" # working
-    # domainName = "www.cnn.com"    # working
-    # domainName = "google.co.jp" # working
-    # domainName = "aws.amazon.com"
-    # domainName = "aishikdeb.com"
-    # resolutionType = "NS"
-    # print("Performing DNS query for {}".format(domainName))
+
+    # Initializing Start Time
+    start_time = time.time()
 
     # Calling mydig tool
-    start_time = time.time()
     result = my_dig(domainName, resolutionType, True)
+
+    # Calculating Final Time
     total_time = time.time() - start_time
+
+    # Printing Output
     print("\nQUESTION SECTION: \n")
     print("{}   IN  {}".format(domainName, resolutionType))
     print("\nANSWER SECTION: \n")
@@ -216,4 +189,3 @@ if __name__ == "__main__":
     print("\nQuery Time: {} msec".format(round(total_time*1000,4)))
     print("\nWHEN: {}".format(datetime.datetime.now().strftime("%a %b %d %H:%M:%S %Y\n")))
     print("MSG SIZE rcvd: {}".format(str(sys.getsizeof(result))))
-    # ground_truth(domainName, resolutionType)
