@@ -38,7 +38,7 @@ plt.bar(br1, part1, color ='r', width = barWidth,
 plt.bar(br2, part2, color ='g', width = barWidth,
         edgecolor ='grey', label ='Google DNS (8.8.8.8)')
 plt.bar(br3, part3, color ='b', width = barWidth,
-        edgecolor ='grey', label ='Local DNS (192.168.214.243)')
+        edgecolor ='grey', label ='Local DNS (10.1.16.16)')
  
 # Adding Xticks
 plt.xlabel('Website Name', fontweight ='bold', fontsize = 15)
