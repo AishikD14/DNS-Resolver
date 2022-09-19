@@ -46,7 +46,7 @@ rootServerDict = {
 }
 
 # Root Signing Keys
-# root_signing_key = ["19036 8 2 49aac11d7b6f6446702e54a1607371607a1a41855200fd2ce1cdde32f24e8fb5", "20326 8 2 e06d44b80b8f1d39a95c0b0d7c65d08458e880409bbc683457104237c7f8ec8d"]
+root_signing_key = ["19036 8 2 49aac11d7b6f6446702e54a1607371607a1a41855200fd2ce1cdde32f24e8fb5", "20326 8 2 e06d44b80b8f1d39a95c0b0d7c65d08458e880409bbc683457104237c7f8ec8d"]
 
 def fetch_dnskey(searchText, targetServerList):
     qname = dns.name.from_text(searchText)
@@ -88,8 +88,10 @@ def fetch_dnskey(searchText, targetServerList):
     return None, None, None, None
 
 def verify_KSK(searchDomain, KSK, DS):
+    for item in DS:
+        ds = item
     hash = dns.dnssec.make_ds(dns.name.from_text(searchDomain), KSK, 'sha256')
-    if DS == hash:
+    if str(ds) == str(hash):
         return True
     else:
         return False
@@ -101,9 +103,10 @@ def verify_ZSK(RRSET, RRSIG, searchText):
         print("DNSSec verification failed")
         quit()
 
-def verify_rrset(RRSET, RRSIG, searchText, ZSK):
+def verify_rrset(RRSET, RRSIG, searchText, RRSET2):
+    print(RRSET2)
     try:
-        dns.dnssec.validate(RRSET, RRSIG, {dns.name.from_text(searchText): ZSK})
+        dns.dnssec.validate(RRSET, RRSIG, {dns.name.from_text(searchText): RRSET2})
         # dns.dnssec.validate_rrsig(RRSET, RRSIG, {dns.name.from_text(searchText): RRSET})
     except dns.dnssec.ValidationFailure:
         print("DNSSec verification failed for verify rrset")
@@ -145,15 +148,17 @@ def recursive_query_resolver(searchDomain, queryType, targetServer, depth, maxDe
     if searchText != "":
         # Check Authority Section for DS record to verify whether DNSSEC supported or not
         supported = False
+        # DS = []
         for record in response.authority:
             if record.rdtype == 43:
                 supported = True
-                for item in record:
-                    # print("------------------------")
-                    DS =item
+                DS = record
+                # for item in record:
+                #     # print("------------------------")
+                #     DS = item
                     # print("DS")
                     # print(item)
-                break
+                # break
         # If DNSSEC not supported end program
         if supported == False:
             print("DNSSEC not supported")
@@ -214,11 +219,11 @@ def recursive_query_resolver(searchDomain, queryType, targetServer, depth, maxDe
                     # print("KSK Verified")
                     verify_ZSK(RRSET2, RRSIG2, searchText)
                     # print("ZSK Verified")
-                    # verify_rrset(RRSET1, RRSIG1, searchText, ZSK)
+                    # verify_rrset(DS, RRSIG1, searchText, RRSET2)
                     # print("Verification successful")
                     # quit()
                 else:
-                    print("DNSSec verification failed")
+                    print("DNSSec verification failed for KSK")
                     quit()
             
 
@@ -272,10 +277,18 @@ def my_dig(domainName, resolutionType, mainCall):
     resolution = False
     while j<len(rootServerList):
         # # Verify Root Signature
-        # q = dns.message.make_query(".", dns.rdatatype.DNSKEY, want_dnssec = True)
-        # secResponse = dns.query.tcp(q, rootServerList[j], 5)
-        # print(secResponse)
-        # if len(secResponse) != 0:
+        RRSIG2, ZSK, KSK, RRSET2 = fetch_dnskey(".", [rootServerList[j]])
+        # verificationStatus = verify_KSK(".", KSK, root_signing_key)
+        hash = dns.dnssec.make_ds(dns.name.from_text("."), KSK, 'sha256')
+        verification = False
+        for i in root_signing_key:
+            if str(hash) == i:
+                # print("Root KSK Verified")
+                verification = True
+                break
+        if verification == False:
+            print("Root Verification Failed")
+            quit()
             
         # Calling recursive_query_resolver function to resolve DNS query by supplying initial depth as 1
         response = recursive_query_resolver(domainName, dns.rdatatype.DNSKEY, rootServerList[j], 1, maxDepth) 

@@ -209,12 +209,15 @@ if __name__ == "__main__":
         for j in range(10):
             start_time = time.time()
             # result = my_dig(i, "A", True)
-            os.system("nslookup "+i)
+            # os.system("nslookup "+i)
+            dns.resolver.override_system_resolver(resolver="192.168.214.243")
+            A = dns.resolver.resolve(i, "A")
+            dns.resolver.restore_system_resolver()
             total_time = time.time() - start_time
             timeArray.append(round(total_time*1000,4))
         mean = sum(timeArray)/10
-        with open("localdns.csv", "a") as f:
-            f.write("%s - %s\n" % (i, mean))
+        with open("part3.csv", "a") as f:
+            f.write("%s-%s\n" % (i, mean))
     # print("\nQUESTION SECTION: \n")
     # print("{}   IN  {}".format(domainName, resolutionType))
     # print("\nANSWER SECTION: \n")

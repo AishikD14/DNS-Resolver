@@ -212,7 +212,7 @@ if __name__ == "__main__":
             timeArray.append(round(total_time*1000,4))
         mean = sum(timeArray)/10
         with open("part1.csv", "a") as f:
-            f.write("%s %s\n" % (i, mean))
+            f.write("%s-%s\n" % (i, mean))
     # print("\nQUESTION SECTION: \n")
     # print("{}   IN  {}".format(domainName, resolutionType))
     # print("\nANSWER SECTION: \n")
