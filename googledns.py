@@ -8,9 +8,6 @@ import dns.rdataclass
 import dns.rdatatype
 import dns.query
 import time
-import datetime
-import sys
-import os
 
 # Main function
 if __name__ == "__main__":
@@ -21,7 +18,6 @@ if __name__ == "__main__":
         timeArray = []
         for j in range(10):
             start_time = time.time()
-            # os.system("nslookup "+i)
             dns.resolver.override_system_resolver(resolver="8.8.8.8")
             A = dns.resolver.resolve(i, "A")
             dns.resolver.restore_system_resolver()

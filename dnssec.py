@@ -78,8 +78,8 @@ def verify_KSK(searchDomain, KSK, DS):
     else:
         return False
 
-# Method for verifying ZSK value
-def verify_ZSK(RRSET, RRSIG, searchText):
+# Method for verifying DNSKEY value
+def verify_DNSKEY(RRSET, RRSIG, searchText):
     try:
         dns.dnssec.validate(RRSET, RRSIG, {dns.name.from_text(searchText): RRSET})
     except dns.dnssec.ValidationFailure:
@@ -178,9 +178,8 @@ def recursive_query_resolver(searchDomain, queryType, targetServer, depth, maxDe
                 verificationStatus = verify_KSK(searchText, KSK, DS)
                 # If KSK verification successful
                 if verificationStatus == True:
-                    # Verify ZSK value
-                    verify_ZSK(RRSET2, RRSIG2, searchText)
-                    # verify_rrset(DS, RRSIG1, searchText, RRSET2)
+                    # Verify DNSKEY value
+                    verify_DNSKEY(RRSET2, RRSIG2, searchText)
                 # If KSK verification failed
                 else:
                     print("DNSSec verification failed")
@@ -243,7 +242,7 @@ def my_dnssec(domainName, resolutionType, mainCall):
                 break
         # Handling scenario where root server verification fails
         if verification == False:
-            print("Root Verification Failed")
+            print("DNSSec Verification Failed")
             quit()
             
         # Calling recursive_query_resolver function to resolve DNS query by supplying initial depth as 1

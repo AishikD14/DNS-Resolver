@@ -18,10 +18,8 @@ if __name__ == "__main__":
         timeArray = []
         for j in range(10):
             start_time = time.time()
-            # os.system("nslookup "+i)
             dns.resolver.override_system_resolver(resolver="10.1.16.16")
             A = dns.resolver.resolve(i, "A")
-            # print(A.response)
             dns.resolver.restore_system_resolver()
             total_time = time.time() - start_time
             timeArray.append(round(total_time*1000,4))
